@@ -1,12 +1,10 @@
 # Changelog
 
-## 0.1.0
+## 0.2.0
 
-- Initial PLabs adaptation of Noir Wallet SDK's provider/chain-wrapper structure.
-- EIP-6963 discovery, injected-provider detection, timeout/disposal/abort support.
-- Public EVM connection, account/permission reads, message signing and chain switching.
-- PLabs privacy address disclosure, send, Shield, Unshield and request status wrappers.
-- Typed events, request validation, normalized RPC errors and capability discovery.
-- Zero-runtime-dependency ESM/CommonJS builds with TypeScript declarations.
-- Workspace integration with the extension's manual dApp playground.
-- No automatic tests or real transaction execution were performed for this release.
+- Publish the standalone SDK as `plabs-js-sdk`; this repository is the shared source for PLabs Network and the wallet extension.
+- Include scoped privacy reads, session metadata, balances, history, notes and DEX order summaries.
+- Include intent-only PEX placement, resume, cancellation/recovery and payout collection (extension 0.7.0+).
+- Include explicit combined connection/read consent via `connect({ privacyScopes })` and the `unifiedConnect` capability (extension 0.8.0+). Plain `connect()` remains EVM-only.
+- Ship zero-runtime-dependency ESM, CommonJS and TypeScript declarations.
+- Add tag-driven GitHub Releases, package verification and opt-in npm publishing with provenance.

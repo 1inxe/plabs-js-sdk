@@ -1,22 +1,22 @@
-# plabs-wallet-sdk
+# plabs-js-sdk
 
 Typed SDK for websites integrating the PLabs EVM privacy wallet extension.
 An adapted fork of the provider/chain-wrapper structure of Noir Wallet SDK;
 PLabs transaction semantics and RPC methods are independent of Zcash.
 
+Version **0.2.0**. Maintained in the standalone [plabs-js-sdk repository](https://github.com/1inxe/plabs-js-sdk).
+
 ## Install
 
 ```sh
-npm install plabs-wallet-sdk
-# or: pnpm add plabs-wallet-sdk
+pnpm add plabs-js-sdk@0.2.0
+# or: npm install plabs-js-sdk@0.2.0
 ```
-
-Initial release: `0.1.0`.
 
 After installation, imports use the normal package name:
 
 ```ts
-import { getPlabsWallet } from 'plabs-wallet-sdk';
+import { getPlabsWallet } from 'plabs-js-sdk';
 
 const wallet = getPlabsWallet();
 if (!wallet) throw new Error('Install PLabs Wallet and refresh this page');
@@ -24,7 +24,7 @@ if (!wallet) throw new Error('Install PLabs Wallet and refresh this page');
 // Call from the website's Connect button. Only EVM account access is granted.
 const { accounts, chainId } = await wallet.connect();
 
-// The extension toolbar popup separately authorizes disclosure of the privacy address.
+// A separate wallet popup authorizes disclosure of the privacy address.
 const { address: privacyAddress } = await wallet.privacy.getAddress();
 
 // Call from a deliberate transaction button. This can spend real funds/fees.
@@ -56,7 +56,7 @@ import {
   discoverPlabsWallets,
   createPlabsWallet,
   detectPlabsProvider,
-} from 'plabs-wallet-sdk';
+} from 'plabs-js-sdk';
 
 const stopDiscovery = discoverPlabsWallets(({ info, provider }) => {
   // Render info as untrusted metadata. Use an <img> for its icon, not raw SVG HTML.
@@ -129,7 +129,7 @@ Already-broadcast transactions cannot be cancelled by disconnecting.
 ## Error handling
 
 ```ts
-import { PlabsWalletError, PLABS_ERROR_CODES } from 'plabs-wallet-sdk';
+import { PlabsWalletError, PLABS_ERROR_CODES } from 'plabs-js-sdk';
 try {
   await wallet.connect();
 } catch (error) {
@@ -165,22 +165,19 @@ inspect wallet history before retrying a funds-moving request.
 ## Build and packaging
 
 This package has **no runtime dependencies**. It ships ESM, CommonJS and
-TypeScript declarations, with optional `plabs-wallet-sdk/chains/evm` and
-`plabs-wallet-sdk/chains/privacy` entry points. Browser access is deferred until
+TypeScript declarations, with optional `plabs-js-sdk/chains/evm` and
+`plabs-js-sdk/chains/privacy` entry points. Browser access is deferred until
 an API is called; importing the package during SSR is safe.
 
-From this standalone SDK directory:
+From this standalone repository:
 
 ```sh
-npm install
 npm run build
 npm pack
 ```
 
-This directory is a standalone source project. The extension's existing workspace
-copy remains its integration snapshot; update that dependency when adopting a new
-SDK release. See PUBLISHING.md in the source project for packaging and npm publication.
-Local build/package output is not registry publication, protocol certification or an
+PLabs Network and the extension import this standalone package. Local
+build/package output is not registry publication, protocol certification or an
 end-to-end transaction test. No automatic tests or real transactions were run
 for this adaptation at the user's request.
 
@@ -188,3 +185,23 @@ See [UPSTREAM.md](UPSTREAM.md), [NOTICE.md](NOTICE.md) and LICENSE.upstream for
 upstream provenance. License: MIT.
 
 The current extension uses the Chrome 127+ toolbar popup for unlock and approval. Collapsing the popup retains the pending request; explicitly reject/cancel to stop it. Unlocking alone does not authorize a signature or transaction.
+
+## Scoped privacy reads
+
+Requires extension 0.6.0 capabilities (`privacyRead`, `privacyHistory`, `privacyNotes`, `dexOrders`). EVM connection alone never grants these scopes.
+
+```ts
+await wallet.connect();
+await wallet.privacy.requestAccess(['address']);
+const session = await wallet.privacy.getSession(); // silent, approved address only
+await wallet.privacy.requestAccess(['balances', 'history']);
+const portfolio = await wallet.privacy.getBalances();
+const history = await wallet.privacy.getHistory({ page: 1, pageSize: 20 });
+await wallet.privacy.revokeAccess();
+```
+
+Balances retain raw decimal strings; missing scans return null. History coverage is wallet operations plus received note summaries, not a guarantee of every historical outgoing transaction. `getNotes` needs the notes scope. `getDexOrders` needs dexOrders; import references with `importOfficialDexOrders` after explicitly confirming in the wallet. This enables official Matcher status reads, not private order placement or fund recovery.
+
+## Releases
+
+Version tags create GitHub Releases with a verified npm tarball and checksums. npm publishing requires repository authentication configuration; see [PUBLISHING.md](PUBLISHING.md).

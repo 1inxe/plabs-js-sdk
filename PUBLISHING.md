@@ -1,47 +1,39 @@
-# SDK 源码与 npm 发布
+# Releases and npm publishing
 
-这是可独立维护的 SDK 源码目录，不依赖插件项目的目录结构。
+The standalone repository is the only SDK source. Network and extension consume the same package.
 
-- 包名：`plabs-wallet-sdk`
-- 当前版本：`0.1.0`
-- 入口源码：`src/index.ts`
-- EVM 接口：`src/chains/evm/api.ts`
-- 隐私接口：`src/chains/privacy/api.ts`
-- 构建脚本：`scripts/build.mjs`
-- 上游来源及许可证：`UPSTREAM.md`、`NOTICE.md`、`LICENSE`、`LICENSE.upstream`
+## Version tracking
 
-## 构建与打包
+`.github/workflows/release.yml` validates every main-branch push and pull request. A `v*` tag additionally creates a GitHub Release with the verified npm tarball and SHA256SUMS. The tag must exactly match package.json, package-lock.json and a CHANGELOG.md entry. Only stable versions are accepted.
 
-```bash
-npm install
-npm run build
+```sh
+npm ci
+node scripts/check-release.mjs
 npm pack
+node scripts/check-package.mjs
+# Commit the release changes before tagging.
+git tag -a v0.2.0 -m 'Release plabs-js-sdk 0.2.0'
+git push origin main v0.2.0
 ```
 
-`dist/esm`、`dist/cjs` 包含运行文件及类型声明。`npm pack` 会先重新构建，生成 `plabs-wallet-sdk-0.1.0.tgz`，可以拿到其他网站项目本地安装：
+Do not move a published tag. Bump the version for subsequent changes. Re-running a release preserves existing GitHub release assets; npm rejects an already-published version.
 
-```bash
-npm install /Users/moli/Workspace/Blockchain/brush/plabs-wallet-sdk/plabs-wallet-sdk-0.1.0.tgz
-```
+## Enable npm publication
 
-SDK 没有运行时依赖；开发构建依赖 TypeScript。包内只包含 package.json 的 files 白名单内容，不包含 node_modules、本地环境文件或发布凭据。
+GitHub releases work without npm credentials. npm publication is gated by the repository Actions variable `NPM_PUBLISH_ENABLED=true`; leave it unset while bootstrapping. No npm token is stored in this repository.
 
-## 发布 npm
+For the first publication, configure repository Actions secret `NPM_TOKEN` with a valid granular npm token allowed to create/publish this package and bypass publishing 2FA. Alternatively, publish the release tarball interactively after `npm login`. Do not send tokens in chat.
 
-使用有发布权限的 npm 账号登录。当前包名为不带 scope 的 `plabs-wallet-sdk`，无需创建 npm 组织。配置真实仓库地址时再添加 repository/homepage 字段。
+For subsequent releases, configure npm Trusted Publisher on the `plabs-js-sdk` package:
 
-```bash
-npm login
-npm whoami
-npm publish --access public
-```
+- GitHub owner: `1inxe`
+- Repository: `plabs-js-sdk`
+- Workflow filename: `release.yml`
+- Environment: leave empty
+- Allow direct `npm publish`
 
-不要覆盖 npm 上已经存在的版本；后续发布前修改 package.json 的 version。需要版本递增时可使用 `npm version patch --no-git-tag-version`，再按自己的 Git 工作流提交。
+Then remove the bootstrap `NPM_TOKEN` secret. The workflow uses Node 24, npm's OIDC authentication, `id-token: write` and provenance. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
 
-发布凭据由 npm 登录流程管理，不放入源码或安装包。发布结果以 npm registry 为准。
+After configuring authentication and `NPM_PUBLISH_ENABLED=true`, re-run the tag workflow with **Re-run all jobs**, or select the existing version tag in **Run workflow**. Do not run publication against main. Publication uses the exact artifact validated by the build job.
 
-## 与插件的关系
-
-后续在本目录维护 SDK。插件项目原有 `packages/plabs-wallet-sdk` 保留为其当前集成副本，不会自动跟随这里的修改。SDK 版本更新后，在插件/演示网站更新依赖或安装新的 tarball 即可。
-
-本次只安装构建依赖、编译并打包，未运行自动测试或真实交易。
+Before registry publication, consumers use `vendor/plabs-js-sdk-0.2.0.tgz`. After publication, run `pnpm add --save-exact plabs-js-sdk@0.2.0` in both consumers and commit their regenerated lockfiles. Never reintroduce an embedded SDK source copy.

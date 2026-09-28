@@ -13,4 +13,4 @@ for (const [module, outDir] of [['ES2020', 'dist/esm'], ['CommonJS', 'dist/cjs']
 }
 await mkdir(new URL('../dist/cjs/', import.meta.url), { recursive: true });
 await writeFile(new URL('../dist/cjs/package.json', import.meta.url), '{"type":"commonjs"}\n');
-console.log('Built plabs-wallet-sdk: ESM, CommonJS and declarations.');
+console.log('Built plabs-js-sdk: ESM, CommonJS and declarations.');

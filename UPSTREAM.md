@@ -3,10 +3,10 @@
 Upstream: https://github.com/NoirWallet/noir-wallet-sdk
 Pinned commit: 19e0aec93187e1679e1cbb44b2cd825a8c0a1662
 Upstream package version: 0.1.9
-PLabs package version: 0.1.0
+PLabs package version: 0.2.0
 
-This is a PLabs source adaptation, distributed as `plabs-wallet-sdk`.
-No remote GitHub repository is implied by this source project.
+This is a PLabs source adaptation, distributed as `plabs-js-sdk`.
+Maintained at https://github.com/1inxe/plabs-js-sdk.
 
 ## Deliberate differences
 

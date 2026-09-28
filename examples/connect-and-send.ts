@@ -1,4 +1,4 @@
-import { getPlabsWallet, type PlabsPrivacySendParams } from 'plabs-wallet-sdk';
+import { getPlabsWallet, type PlabsPrivacySendParams } from 'plabs-js-sdk';
 
 // Wire these functions to explicit UI buttons. No connection or transaction
 // is initiated at module import time.

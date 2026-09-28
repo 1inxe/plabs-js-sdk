@@ -1,0 +1,107 @@
+name: SDK CI and release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Check package and release version
+        run: node scripts/check-release.mjs
+      - run: npm ci --ignore-scripts
+      - name: Build and pack
+        run: npm pack
+      - name: Verify the installable package
+        run: node scripts/check-package.mjs
+      - name: Checksum package
+        run: sha256sum plabs-js-sdk-*.tgz > SHA256SUMS
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: npm-package
+          path: |
+            plabs-js-sdk-*.tgz
+            SHA256SUMS
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: npm-package
+          path: release-assets
+      - name: Create GitHub release
+        working-directory: release-assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          sha256sum --check SHA256SUMS
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release already exists; preserving immutable assets."
+          else
+            gh release create "$RELEASE_TAG" ./*.tgz SHA256SUMS \
+              --verify-tag --title "plabs-js-sdk $RELEASE_TAG" --generate-notes
+          fi
+      - name: Report npm publishing configuration
+        if: vars.NPM_PUBLISH_ENABLED != 'true'
+        run: echo '::notice::GitHub release created. npm publishing is disabled until NPM_PUBLISH_ENABLED=true and npm authentication is configured. See PUBLISHING.md.'
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v') && vars.NPM_PUBLISH_ENABLED == 'true'
+    needs: [build, release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: npm-package
+          path: release-assets
+      - name: Publish verified artifact to npm
+        working-directory: release-assets
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          sha256sum --check SHA256SUMS
+          # Optional bootstrap token; otherwise npm authenticates via OIDC.
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            echo '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > "$RUNNER_TEMP/npmrc"
+            export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npmrc"
+          fi
+          npm publish ./plabs-js-sdk-*.tgz --access public --provenance --ignore-scripts

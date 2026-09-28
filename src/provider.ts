@@ -3,7 +3,7 @@ import { BaseAPI } from './base-api.js';
 import { EvmAPI } from './chains/evm/api.js';
 import { PrivacyAPI } from './chains/privacy/api.js';
 import { PlabsWalletError, PLABS_ERROR_CODES } from './errors.js';
-import type { PlabsCapabilities, PlabsProvider, WalletConnection } from './types.js';
+import type { PlabsCapabilities, PlabsProvider, WalletConnection, PrivacyReadScope } from './types.js';
 
 export class PlabsWallet extends BaseAPI {
   readonly isPlabsWallet = true;
@@ -16,8 +16,12 @@ export class PlabsWallet extends BaseAPI {
     this.evm = new EvmAPI(provider);
     this.privacy = new PrivacyAPI(provider);
   }
-  /** Public EVM account connection only; privacy address access remains separate. */
-  async connect(): Promise<WalletConnection> {
+  /** With privacyScopes, request one explicit connection/read approval. Without options, EVM only. */
+  async connect(options?: { privacyScopes: PrivacyReadScope[] }): Promise<WalletConnection> {
+    if (options !== undefined) {
+      if (!options || typeof options !== 'object' || Object.keys(options).some(key => key !== 'privacyScopes') || !Array.isArray(options.privacyScopes) || !options.privacyScopes.length || options.privacyScopes.length > 5 || options.privacyScopes.some(scope => !['address','balances','history','notes','dexOrders'].includes(scope))) throw new PlabsWalletError('Invalid privacy connection scopes.', -32602);
+      return this.request('plabs_connect', [{ scopes: [...new Set(options.privacyScopes)] }]);
+    }
     const accounts = await this.evm.connect();
     return { accounts, chainId: await this.evm.getChainId() };
   }
