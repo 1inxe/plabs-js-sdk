@@ -147,3 +147,7 @@ try {
 ## 许可证
 
 [MIT](LICENSE)。基于 Noir Wallet SDK 改编，来源信息保留在 [NOTICE.md](NOTICE.md) 和 [LICENSE.upstream](LICENSE.upstream)。
+
+### 白名单所有权证明
+
+钱包声明 `capabilities.methods.privacyOwnership` 后，可调用 `sdk.privacy.proveOwnership(message, privacyAddress)`。该操作单独请求用户批准，返回 `bjj-schnorr-v1` 公共证明，不导出隐私密钥。`getAddress()` 的可选 `rawAddress` 字段可用于官网白名单挑战接口。消息最多 8192 字符，地址必须与当前隐私账户一致。此接口已加入源码，需发布新版 SDK 后供 npm 使用者升级。

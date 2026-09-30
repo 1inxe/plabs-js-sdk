@@ -24,7 +24,7 @@ export interface PlabsWalletInfo { uuid: string; name: string; icon: string; rdn
 export interface DiscoveredPlabsWallet { info: PlabsWalletInfo; provider: PlabsProvider }
 export interface PlabsCapabilities {
   version: 1;
-  methods: { personalSign: boolean; signTypedData: boolean; evmTransactions: boolean; evmPreview: boolean; privacyTransactions: boolean; privacyRead?: boolean; privacyHistory?: boolean; privacyNotes?: boolean; dexOrders?: boolean; dexTrading?: boolean; unifiedConnect?: boolean };
+  methods: { personalSign: boolean; signTypedData: boolean; evmTransactions: boolean; evmPreview: boolean; privacyTransactions: boolean; privacyRead?: boolean; privacyHistory?: boolean; privacyNotes?: boolean; dexOrders?: boolean; dexTrading?: boolean; unifiedConnect?: boolean; privacyOwnership?: boolean };
   networks: Array<{ chainId: number; name: string; nativeSymbol: string; pools: Array<{ address: string; symbol: string; canShield: boolean; canUnshield: boolean; decimals?: number; underlying?: string }> }>;
 }
 export interface WalletConnection { accounts: string[]; chainId: HexChainId; privacy?: PrivacySession }
@@ -40,7 +40,7 @@ export interface PlabsPrivacySendParams {
   feePool?: string;
 }
 export type PlabsPrivacyPoolParams = Omit<PlabsPrivacySendParams, 'to'>;
-export interface PrivacyAddress { address: string; chainId: HexChainId }
+export interface PrivacyAddress { address: string; rawAddress?: string; chainId: HexChainId }
 export interface PrivacyTransactionRequest {
   kind: 'send' | 'shield' | 'unshield';
   chainId: HexChainId;
@@ -78,3 +78,6 @@ export interface PrivacyPageParams { page?: number; pageSize?: number; poolAddre
 export interface DexOrderIntent { chainId: '0x8f'; side: 'buy' | 'sell'; type: 'limit' | 'market'; quantityRaw: string; priceTicks: string; maxFeeRaw: string }
 export interface DexOrderSummary { id: string; side: 'buy' | 'sell'; type: 'limit' | 'market'; quantityRaw: string; priceTicks: string; createdAt: number; epoch: string; status: 'open' | 'filled' | 'pending' | 'not-found' | 'previous-epoch' | 'unavailable' | 'recovered'; matchedRaw: string | null; pendingRaw: string | null; remainingRaw: string | null; localId?: string; managed?: boolean; executionState?: 'prepared' | 'funding' | 'funded' | 'submitting' | 'open' | 'canceling' | 'recovering' | 'recovered' | 'discarded'; canResume?: boolean; canCancel?: boolean; error?: string; executionActive?: boolean; transactionFailed?: boolean; fundingProgress?: { asset: string; state: 'prepared' | 'confirming' | 'indexing' | 'confirmed' | 'failed' }[] }
 export interface DexOrders { orders: DexOrderSummary[]; source: 'official-matcher'; importedAt: number | null; fetchedAt: number; needsImport: boolean; canPlaceOrders: boolean; error?: string }
+
+/** Public proof only; privacy keys remain inside the wallet. */
+export type PrivacyOwnershipProof = { version: 'bjj-schnorr-v1'; r_x_hex: string; r_y_hex: string; s_hex: string };

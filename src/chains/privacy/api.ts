@@ -1,4 +1,4 @@
-import type { PrivacyReadScope, PrivacySession, WalletPortfolio, PrivacyHistoryPage, PrivacyPageParams, PrivacyNotes, DexOrders, DexOrderIntent, DexOrderSummary } from '../../types.js';
+import type { PrivacyOwnershipProof, PrivacyReadScope, PrivacySession, WalletPortfolio, PrivacyHistoryPage, PrivacyPageParams, PrivacyNotes, DexOrders, DexOrderIntent, DexOrderSummary } from '../../types.js';
 import { BaseAPI } from '../../base-api.js';
 import { invalid, privacyAddress, privacyParams } from '../../validation.js';
 import type { PlabsPrivacyPoolParams, PlabsPrivacySendParams, PrivacyAddress, PrivacyTransactionResult } from '../../types.js';
@@ -26,6 +26,12 @@ export class PrivacyAPI extends BaseAPI {
   private dexAction(method: string, id: string): Promise<DexOrderSummary> {
     if (typeof id !== 'string' || !/^[0-9a-f-]{36}$/i.test(id)) invalid('A local PEX order ID returned by this wallet is required.');
     return this.request(method, [id]);
+  }
+
+  /** Requests a separate wallet approval, bound to the expected privacy address. */
+  proveOwnership(message: string, address: string): Promise<PrivacyOwnershipProof> {
+    if (typeof message !== 'string' || !message.trim() || message.length > 8192) invalid('A non-empty ownership challenge of at most 8192 characters is required.');
+    return this.request('plabs_provePrivacyOwnership', [{ message, privacyAddress: privacyAddress(address) }]);
   }
 
   /** Separate disclosure approval; EVM connection alone never shares this address. */
