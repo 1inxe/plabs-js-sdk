@@ -85,6 +85,51 @@ async function sendPrivateTransfer(params: PlabsPrivacySendParams) {
 
 `shield` and `unshield` accept the same parameters without `to`: destinations are bound to the current wallet account. `getAddress()` requests permission to share the user's privacy receiving address. Transfers require wallet approval; connection alone does not authorize them. Transaction status is scoped to the requesting site and account in the current browser session.
 
+## Sponsored custody payments
+
+This API is available in the source checkout for the next SDK release. The package version remains `0.2.0`; an existing npm installation does not include these additions. Build the checkout locally to use the typed helper, and check the connected extension's capability before offering this action.
+
+```ts
+import {
+  validateSponsoredPrivacyTransactionRequest,
+  type SponsoredPrivacyTransactionRequest,
+  type SponsoredPrivacyTransactionResult,
+} from "plabs-js-sdk";
+
+async function payPreparedIntent(
+  request: SponsoredPrivacyTransactionRequest,
+): Promise<SponsoredPrivacyTransactionResult> {
+  const capabilities = await wallet.capabilities();
+  if (!capabilities.methods.sponsoredPrivacyTransfers) {
+    throw new Error("Update PLabs Wallet to enable sponsored privacy transfers");
+  }
+  return wallet.privacy.sendSponsoredTransaction(
+    validateSponsoredPrivacyTransactionRequest(request),
+  );
+}
+```
+
+Call this helper from an explicit payment or resume action. `sendSponsoredTransaction` validates these public fields and calls `plabs_sendSponsoredPrivacyTransaction`:
+
+| Field | Contract |
+| --- | --- |
+| `protocol` | `"plabs-custody-v1"` |
+| `apiBase` | Canonical `https://app.plabs.online/nft-<scope>/v1`, at most 200 characters; scope uses lowercase letters/digits separated by single hyphens; no query, fragment, credentials, port or trailing slash |
+| `campaignId` | 1–64 lowercase letters, digits or hyphens |
+| `rulesHash`, `intentId` | `0x` followed by 32 hexadecimal bytes |
+| `token` | Nonempty service session token without whitespace; keep it in memory only |
+| `payment.chainId` | `143` |
+| `payment.poolAddress` | `0x` followed by 20 hexadecimal bytes |
+| `payment.recipientRaw` | 43 hexadecimal bytes without `0x` |
+| `payment.amountRaw` | Positive base-unit **string**, from `"1"` through `"9007199254740991"`; no decimals, exponent or leading zeros |
+| `payment.memoPrefixHex` | `0x` followed by 1–128 complete hexadecimal bytes |
+
+Unknown fields are rejected. Validation returns a copy and preserves payment strings exactly. It does not fetch the service, generate a proof, save the token, or authorize spending. The wallet independently verifies the service profile and prepared intent, authenticates the current wallet identity, and requests payment approval. Keys, proofs and private notes remain in the extension.
+
+The result contains `{ id, intentId, state, jobId?, txHash?, message? }`, where `state` is `pending`, `confirmed` or `failed`. Keep the original intent and payment fields when resuming a pending request: call the same method with the same request. The wallet resumes its saved transaction and rejects changed payment terms for that intent. The SDK does not automatically retry or create another payment. A public transaction hash alone does not imply campaign acceptance; use the returned state and service status.
+
+The two types and validator are exported from both `plabs-js-sdk` and `plabs-js-sdk/chains/privacy`. Different campaigns using this custody protocol share the same method; no campaign-specific SDK method is required.
+
 ## PEX orders
 
 When `capabilities().methods.dexTrading` is enabled, use `wallet.privacy.placeDexOrder(intent)`. Its fields are:
@@ -143,6 +188,8 @@ try {
 Common codes: `4001` rejected, `4100` unauthorized, `4200` unsupported, `4900` disconnected, `-32602` invalid parameters, `-32002` request already pending. Check wallet history before retrying a failed transaction submission.
 
 See [examples/connect-and-send.ts](examples/connect-and-send.ts) for reusable connection and transfer helpers.
+
+Run `npm test` to build ESM/CommonJS/declarations and execute the local sponsored-payment contract tests. Tests use synthetic providers and make no network requests or real payments.
 
 ## License
 

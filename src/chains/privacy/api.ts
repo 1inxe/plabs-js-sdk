@@ -1,6 +1,8 @@
 import type { PrivacyOwnershipProof, PrivacyReadScope, PrivacySession, WalletPortfolio, PrivacyHistoryPage, PrivacyPageParams, PrivacyNotes, DexOrders, DexOrderIntent, DexOrderSummary } from '../../types.js';
 import { BaseAPI } from '../../base-api.js';
 import { invalid, privacyAddress, privacyParams } from '../../validation.js';
+import { validateSponsoredPrivacyTransactionRequest } from '../../sponsored-privacy.js';
+import type { SponsoredPrivacyTransactionRequest, SponsoredPrivacyTransactionResult } from '../../types.js';
 import type { PlabsPrivacyPoolParams, PlabsPrivacySendParams, PrivacyAddress, PrivacyTransactionResult } from '../../types.js';
 export class PrivacyAPI extends BaseAPI {
   requestAccess(scopes: PrivacyReadScope[]): Promise<PrivacySession> {
@@ -40,6 +42,17 @@ export class PrivacyAPI extends BaseAPI {
   async sendTransaction(params: PlabsPrivacySendParams): Promise<PrivacyTransactionResult> {
     const normalized = privacyParams(params, true);
     return this.request('plabs_sendPrivacyTransaction', [{ ...normalized, kind: 'send', recipient: privacyAddress(params.to) }]);
+  }
+  /**
+   * Request wallet-verified sponsored custody payment. Retrying the same intent
+   * resumes its saved transaction; payment fields must remain unchanged.
+   */
+  async sendSponsoredTransaction(
+    request: SponsoredPrivacyTransactionRequest,
+  ): Promise<SponsoredPrivacyTransactionResult> {
+    return this.request('plabs_sendSponsoredPrivacyTransaction', [
+      validateSponsoredPrivacyTransactionRequest(request),
+    ]);
   }
   async shield(params: PlabsPrivacyPoolParams): Promise<PrivacyTransactionResult> {
     return this.request('plabs_sendPrivacyTransaction', [{ ...privacyParams(params), kind: 'shield' }]);

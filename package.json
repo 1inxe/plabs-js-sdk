@@ -51,6 +51,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs && node --test tests/*.test.mjs",
     "prepack": "node scripts/build.mjs"
   },
   "devDependencies": {

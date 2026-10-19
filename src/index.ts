@@ -4,4 +4,5 @@ export type { DetectProviderOptions } from './discovery.js';
 export { PlabsWalletError, PLABS_ERROR_CODES, toPlabsWalletError } from './errors.js';
 export { EvmAPI } from './chains/evm/index.js';
 export { PrivacyAPI } from './chains/privacy/index.js';
+export { validateSponsoredPrivacyTransactionRequest } from './sponsored-privacy.js';
 export type * from './types.js';

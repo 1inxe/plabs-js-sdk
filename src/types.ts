@@ -24,7 +24,7 @@ export interface PlabsWalletInfo { uuid: string; name: string; icon: string; rdn
 export interface DiscoveredPlabsWallet { info: PlabsWalletInfo; provider: PlabsProvider }
 export interface PlabsCapabilities {
   version: 1;
-  methods: { personalSign: boolean; signTypedData: boolean; evmTransactions: boolean; evmPreview: boolean; privacyTransactions: boolean; privacyRead?: boolean; privacyHistory?: boolean; privacyNotes?: boolean; dexOrders?: boolean; dexTrading?: boolean; unifiedConnect?: boolean; privacyOwnership?: boolean };
+  methods: { personalSign: boolean; signTypedData: boolean; evmTransactions: boolean; evmPreview: boolean; privacyTransactions: boolean; privacyRead?: boolean; privacyHistory?: boolean; privacyNotes?: boolean; dexOrders?: boolean; dexTrading?: boolean; unifiedConnect?: boolean; privacyOwnership?: boolean; sponsoredPrivacyTransfers?: boolean };
   networks: Array<{ chainId: number; name: string; nativeSymbol: string; pools: Array<{ address: string; symbol: string; canShield: boolean; canUnshield: boolean; decimals?: number; underlying?: string }> }>;
 }
 export interface WalletConnection { accounts: string[]; chainId: HexChainId; privacy?: PrivacySession }
@@ -50,6 +50,38 @@ export interface PrivacyTransactionRequest {
   feePool?: string;
 }
 export interface PrivacyTransactionResult { id: string; state: 'pending' | 'confirmed' | 'failed'; txHash?: string; message?: string }
+
+/** Public payment intent; the wallet independently authenticates and verifies its custody service. */
+export interface SponsoredPrivacyTransactionRequest {
+  protocol: 'plabs-custody-v1';
+  /** Canonical HTTPS endpoint: https://app.plabs.online/nft-<scope>/v1. */
+  apiBase: string;
+  campaignId: string;
+  rulesHash: string;
+  intentId: string;
+  /** Keep this short-lived service token in memory only. */
+  token: string;
+  payment: {
+    chainId: 143;
+    poolAddress: string;
+    /** A 43-byte hexadecimal privacy address without a 0x prefix. */
+    recipientRaw: string;
+    /** Positive base-unit integer string, at most Number.MAX_SAFE_INTEGER. */
+    amountRaw: string;
+    /** 0x-prefixed bytes, from 1 to 128 bytes. */
+    memoPrefixHex: string;
+  };
+}
+
+/** Public operation status only: no proofs, wallet keys or private notes. */
+export interface SponsoredPrivacyTransactionResult {
+  id: string;
+  intentId: string;
+  state: 'pending' | 'confirmed' | 'failed';
+  jobId?: string;
+  txHash?: string;
+  message?: string;
+}
 
 /** Each scope is approved for one site, account, network and unlocked privacy session. */
 export type PrivacyReadScope = 'address' | 'balances' | 'history' | 'notes' | 'dexOrders';

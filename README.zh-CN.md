@@ -85,6 +85,51 @@ async function sendPrivateTransfer(params: PlabsPrivacySendParams) {
 
 `shield` 和 `unshield` 接受相同参数，但不接受 `to`，目标绑定到当前钱包账户。`getAddress()` 请求分享用户的隐私收款地址。交易需要钱包批准，连接账户本身不会授权转账。交易状态查询限于当前浏览器会话内发起请求的网站和账户。
 
+## 赞助托管付款
+
+此接口已加入源码，将随下一版 SDK 发布。当前包版本仍为 `0.2.0`，已有 npm 安装不包含这些新增接口。可在本地构建此仓库使用类型化方法，并在展示付款入口前检查当前扩展的能力声明。
+
+```ts
+import {
+  validateSponsoredPrivacyTransactionRequest,
+  type SponsoredPrivacyTransactionRequest,
+  type SponsoredPrivacyTransactionResult,
+} from "plabs-js-sdk";
+
+async function payPreparedIntent(
+  request: SponsoredPrivacyTransactionRequest,
+): Promise<SponsoredPrivacyTransactionResult> {
+  const capabilities = await wallet.capabilities();
+  if (!capabilities.methods.sponsoredPrivacyTransfers) {
+    throw new Error("请更新 PLabs Wallet 以使用赞助隐私转账");
+  }
+  return wallet.privacy.sendSponsoredTransaction(
+    validateSponsoredPrivacyTransactionRequest(request),
+  );
+}
+```
+
+从用户明确点击的付款或恢复按钮调用上述方法。`sendSponsoredTransaction` 校验以下公开字段后调用 `plabs_sendSponsoredPrivacyTransaction`：
+
+| 字段 | 约定 |
+| --- | --- |
+| `protocol` | `"plabs-custody-v1"` |
+| `apiBase` | 规范地址 `https://app.plabs.online/nft-<scope>/v1`，最长 200 字符；scope 为小写字母/数字组成的段，以单个连字符分隔；不接受查询参数、fragment、用户名密码、端口或末尾斜杠 |
+| `campaignId` | 1–64 个小写字母、数字或连字符 |
+| `rulesHash`、`intentId` | `0x` 加 32 字节十六进制 |
+| `token` | 非空且无空白字符的服务会话 token，仅保存在内存 |
+| `payment.chainId` | `143` |
+| `payment.poolAddress` | `0x` 加 20 字节十六进制 |
+| `payment.recipientRaw` | 不带 `0x` 的 43 字节十六进制隐私地址 |
+| `payment.amountRaw` | 正整数基础单位**字符串**，范围为 `"1"` 至 `"9007199254740991"`；不接受小数、科学计数法或前导零 |
+| `payment.memoPrefixHex` | `0x` 加 1–128 个完整的十六进制字节 |
+
+额外字段会被拒绝。校验返回独立对象，保留付款字符串原值，不请求服务、不生成证明、不保存 token，也不授权支出。钱包独立校验服务配置与已准备的付款意图，验证当前钱包身份，并请求用户批准。密钥、证明和隐私 Notes 均留在扩展内。
+
+结果为 `{ id, intentId, state, jobId?, txHash?, message? }`，其中 `state` 为 `pending`、`confirmed` 或 `failed`。恢复待处理请求时，保留原有 intent 和全部付款字段，向同一方法重传相同请求。钱包恢复原交易，并拒绝该 intent 下被更改的付款条件。SDK 不自动重试或创建另一笔付款。仅有公开交易哈希不代表活动已经接受该付款，应结合返回状态与服务状态判断。
+
+这两个类型及校验函数同时从 `plabs-js-sdk` 和 `plabs-js-sdk/chains/privacy` 导出。采用此托管协议的不同活动共用同一方法，无需为每个活动增加专用 SDK 接口。
+
 ## PEX 订单
 
 当 `capabilities().methods.dexTrading` 启用时，可调用 `wallet.privacy.placeDexOrder(intent)`，参数如下：
@@ -143,6 +188,8 @@ try {
 常见错误码：`4001` 用户拒绝、`4100` 未授权、`4200` 不支持、`4900` 断开连接、`-32602` 参数无效、`-32002` 已有待处理请求。交易提交报错后，先检查钱包历史再决定是否重试。
 
 可复用的连接与转账函数见 [examples/connect-and-send.ts](examples/connect-and-send.ts)。
+
+执行 `npm test` 会构建 ESM、CommonJS 和类型声明，再运行本地赞助付款契约测试。测试仅使用合成 provider，不请求网络或进行真实付款。
 
 ## 许可证
 
