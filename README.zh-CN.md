@@ -202,3 +202,14 @@ try {
 ### 隐私 NFT mint
 
 新钱包通过 `methods.nftMinting` 声明支持能力。`wallet.privacy.mintNft({chainId: 1, poolAddress})` 发起已验证 Ethereum 免费合集的铸造；预留/证明和最终 ETH Gas 分别确认。`getNftMints()` 仅读取当前网站的公开 mint 记录，`resumeNftMint(id)` 恢复原预留和证明，或核对已保存的原交易哈希。证明、私有 Note 和原始签名不返回网页。拒绝其他网络、付费发售、任意 calldata 和收款地址覆盖。这些方法及请求/结果类型已随 `plabs-js-sdk@0.3.0` 发布，可从包根入口或 privacy 子路径导入。
+
+
+### 隐私 NFT 持仓（0.3.1）
+
+```ts
+await wallet.privacy.requestAccess(['nfts']);
+const cached = await wallet.privacy.getNftAssets();
+const refreshed = await wallet.privacy.getNftAssets({ sync: true });
+```
+
+调用前检查 `capabilities.methods.nftAssets`。独立的 `nfts` 权限允许网站读取当前隐私账户的合集、编号和持有状态；旧的 address/notes 授权不会自动开放 NFT。完整扫描后包含转入资产并移除已花费 Note。`syncComplete: false` 表示扫描尚不完整，应保留缓存资产并显示同步错误。同步在钱包内扫描，不签名、不发送交易，也不返回私钥或 Note 开口。

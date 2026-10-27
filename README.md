@@ -198,3 +198,14 @@ Run `npm test` to build ESM/CommonJS/declarations and execute the local sponsore
 ### Private NFT mints
 
 Updated wallets advertise `methods.nftMinting`. `wallet.privacy.mintNft({chainId: 1, poolAddress})` requests the reviewed Ethereum free-mint flow, with local proving, an initial reservation approval and a separate final ETH gas approval. `getNftMints()` reads this site's public mint records; `resumeNftMint(id)` resumes the original reservation/proof or checks its saved transaction hash. Proofs, Note openings and signatures remain inside the wallet. Paid drops, arbitrary calldata, recipient overrides and other networks are rejected. These methods and their request/result types are available in `plabs-js-sdk@0.3.0`, from both the package root and the privacy subpath.
+
+
+### Private NFT holdings (0.3.1)
+
+```ts
+await wallet.privacy.requestAccess(['nfts']);
+const cached = await wallet.privacy.getNftAssets();
+const refreshed = await wallet.privacy.getNftAssets({ sync: true });
+```
+
+Check `capabilities.methods.nftAssets` before use. The separate `nfts` permission discloses collection names, token IDs and holding status for the current privacy account. Existing address/notes grants do not authorize NFT reads. Results include received NFTs and exclude spent Notes after a complete scan. Treat `syncComplete: false` as partial coverage; display the cached holdings and any sync error. A sync scans in the wallet and never signs or submits a transaction. No private keys or Note openings are returned.

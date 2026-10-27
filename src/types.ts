@@ -24,7 +24,7 @@ export interface PlabsWalletInfo { uuid: string; name: string; icon: string; rdn
 export interface DiscoveredPlabsWallet { info: PlabsWalletInfo; provider: PlabsProvider }
 export interface PlabsCapabilities {
   version: 1;
-  methods: { personalSign: boolean; signTypedData: boolean; evmTransactions: boolean; evmPreview: boolean; privacyTransactions: boolean; privacyRead?: boolean; privacyHistory?: boolean; privacyNotes?: boolean; dexOrders?: boolean; dexTrading?: boolean; unifiedConnect?: boolean; privacyOwnership?: boolean; sponsoredPrivacyTransfers?: boolean; nftMinting?: boolean };
+  methods: { personalSign: boolean; signTypedData: boolean; evmTransactions: boolean; evmPreview: boolean; privacyTransactions: boolean; privacyRead?: boolean; privacyHistory?: boolean; privacyNotes?: boolean; dexOrders?: boolean; dexTrading?: boolean; unifiedConnect?: boolean; privacyOwnership?: boolean; sponsoredPrivacyTransfers?: boolean; nftMinting?: boolean; nftAssets?: boolean };
   networks: Array<{ chainId: number; name: string; nativeSymbol: string; pools: Array<{ address: string; symbol: string; canShield: boolean; canUnshield: boolean; decimals?: number; underlying?: string }> }>;
 }
 export interface WalletConnection { accounts: string[]; chainId: HexChainId; privacy?: PrivacySession }
@@ -57,6 +57,15 @@ export interface NftMintResult {
   id: string; chainId: 1; poolAddress: string; name: string; symbol: string; tokenId?: string;
   state: 'pending' | 'confirmed' | 'failed'; stage: string; createdAt: number;
   txHash?: string; canResume: boolean; message?: string;
+}
+
+/** Shared only after a separate `nfts` read permission. No Note openings or spending keys. */
+export interface NftAsset {
+  id: string; chainId: 1; type: 'perc721'; poolAddress: string; name: string; symbol: string;
+  tokenId: string; txHash: string; blockNumber: number; state: 'confirmed' | 'pending'; source: 'chain' | 'mint';
+}
+export interface NftAssetSnapshot {
+  chainId: 1; items: NftAsset[]; syncedAt: number | null; syncComplete: boolean; error?: string; progress?: string;
 }
 
 /** Public payment intent; the wallet independently authenticates and verifies its custody service. */
@@ -92,7 +101,7 @@ export interface SponsoredPrivacyTransactionResult {
 }
 
 /** Each scope is approved for one site, account, network and unlocked privacy session. */
-export type PrivacyReadScope = 'address' | 'balances' | 'history' | 'notes' | 'dexOrders';
+export type PrivacyReadScope = 'address' | 'balances' | 'history' | 'notes' | 'dexOrders' | 'nfts';
 export interface PrivacySession { version: 1; chainId: HexChainId; address?: string; scopes: PrivacyReadScope[]; expiresAt?: number; remembered?: boolean }
 export interface PublicBalance { chainId: number; type: 'native' | 'erc20'; address: string | null; symbol: string; decimals: number; balanceRaw: string }
 export interface ShieldedBalance {

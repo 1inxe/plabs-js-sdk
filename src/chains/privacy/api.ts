@@ -4,7 +4,7 @@ import { invalid, privacyAddress, privacyParams } from '../../validation.js';
 import { validateSponsoredPrivacyTransactionRequest } from '../../sponsored-privacy.js';
 import type { SponsoredPrivacyTransactionRequest, SponsoredPrivacyTransactionResult } from '../../types.js';
 import type { PlabsPrivacyPoolParams, PlabsPrivacySendParams, PrivacyAddress, PrivacyTransactionResult } from '../../types.js';
-import type { NftMintRequest, NftMintResult } from '../../types.js';
+import type { NftAssetSnapshot, NftMintRequest, NftMintResult } from '../../types.js';
 export class PrivacyAPI extends BaseAPI {
   /** Independent wallet approvals cover reservation/proving and the final ETH network fee. */
   async mintNft(input: NftMintRequest): Promise<NftMintResult> {
@@ -18,8 +18,13 @@ export class PrivacyAPI extends BaseAPI {
     if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) invalid('A local NFT mint ID returned by this wallet is required.');
     return this.request('plabs_resumeNftMint', [id]);
   }
+  /** Read the current privacy account's NFT holdings after explicit `nfts` consent. */
+  async getNftAssets(options: { sync?: boolean } = {}): Promise<NftAssetSnapshot> {
+    if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => key !== 'sync') || (options.sync !== undefined && typeof options.sync !== 'boolean')) invalid('Only the NFT sync option is accepted.');
+    return this.request('plabs_getNftAssets', [{ sync: options.sync === true }]);
+  }
   requestAccess(scopes: PrivacyReadScope[]): Promise<PrivacySession> {
-    if (!Array.isArray(scopes) || !scopes.length || scopes.length > 5 || scopes.some(scope => !['address', 'balances', 'history', 'notes', 'dexOrders'].includes(scope))) invalid('Select supported privacy read scopes.');
+    if (!Array.isArray(scopes) || !scopes.length || scopes.length > 6 || scopes.some(scope => !['address', 'balances', 'history', 'notes', 'dexOrders', 'nfts'].includes(scope))) invalid('Select supported privacy read scopes.');
     return this.request('plabs_requestPrivacyAccess', [{ scopes: [...new Set(scopes)] }]);
   }
   getSession(): Promise<PrivacySession> { return this.request('plabs_getPrivacySession'); }

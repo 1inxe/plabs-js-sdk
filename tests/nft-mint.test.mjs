@@ -17,3 +17,20 @@ test('NFT mint rejects arbitrary transactions, recipients, proofs and wrong netw
   for(const extra of [{chainId:143},{data:'0x1234'},{recipient:'0x1234'},{proof:{}},{value:'1'},{tokenId:'7'}])await assert.rejects(f.wallet.privacy.mintNft({...intent,...extra}));
   await assert.rejects(f.wallet.privacy.resumeNftMint('other-site-id'));assert.equal(f.calls.length,0);
 });
+
+test('NFT holdings use a separate read scope and accept only explicit sync', async () => {
+  const f = fixture();
+  await f.wallet.privacy.requestAccess(['nfts']);
+  await f.wallet.privacy.getNftAssets();
+  await f.wallet.privacy.getNftAssets({sync:true});
+  assert.deepEqual(f.calls, [
+    {method:'plabs_requestPrivacyAccess',params:[{scopes:['nfts']}]},
+    {method:'plabs_getNftAssets',params:[{sync:false}]},
+    {method:'plabs_getNftAssets',params:[{sync:true}]},
+  ]);
+  const before = f.calls.length;
+  for (const options of [null, [], {sync:'true'}, {account:'other'}, {seed:'secret'}]) {
+    await assert.rejects(f.wallet.privacy.getNftAssets(options));
+  }
+  assert.equal(f.calls.length,before);
+});
