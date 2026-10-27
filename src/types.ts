@@ -24,7 +24,7 @@ export interface PlabsWalletInfo { uuid: string; name: string; icon: string; rdn
 export interface DiscoveredPlabsWallet { info: PlabsWalletInfo; provider: PlabsProvider }
 export interface PlabsCapabilities {
   version: 1;
-  methods: { personalSign: boolean; signTypedData: boolean; evmTransactions: boolean; evmPreview: boolean; privacyTransactions: boolean; privacyRead?: boolean; privacyHistory?: boolean; privacyNotes?: boolean; dexOrders?: boolean; dexTrading?: boolean; unifiedConnect?: boolean; privacyOwnership?: boolean; sponsoredPrivacyTransfers?: boolean };
+  methods: { personalSign: boolean; signTypedData: boolean; evmTransactions: boolean; evmPreview: boolean; privacyTransactions: boolean; privacyRead?: boolean; privacyHistory?: boolean; privacyNotes?: boolean; dexOrders?: boolean; dexTrading?: boolean; unifiedConnect?: boolean; privacyOwnership?: boolean; sponsoredPrivacyTransfers?: boolean; nftMinting?: boolean };
   networks: Array<{ chainId: number; name: string; nativeSymbol: string; pools: Array<{ address: string; symbol: string; canShield: boolean; canUnshield: boolean; decimals?: number; underlying?: string }> }>;
 }
 export interface WalletConnection { accounts: string[]; chainId: HexChainId; privacy?: PrivacySession }
@@ -50,6 +50,14 @@ export interface PrivacyTransactionRequest {
   feePool?: string;
 }
 export interface PrivacyTransactionResult { id: string; state: 'pending' | 'confirmed' | 'failed'; txHash?: string; message?: string }
+/** Reviewed Ethereum free-mint intent. The wallet selects the edition and creates its private Note. */
+export interface NftMintRequest { chainId: 1; poolAddress: string }
+/** Public status only. NFT proofs, note openings and signatures never enter this result. */
+export interface NftMintResult {
+  id: string; chainId: 1; poolAddress: string; name: string; symbol: string; tokenId?: string;
+  state: 'pending' | 'confirmed' | 'failed'; stage: string; createdAt: number;
+  txHash?: string; canResume: boolean; message?: string;
+}
 
 /** Public payment intent; the wallet independently authenticates and verifies its custody service. */
 export interface SponsoredPrivacyTransactionRequest {

@@ -194,3 +194,7 @@ Run `npm test` to build ESM/CommonJS/declarations and execute the local sponsore
 ## License
 
 [MIT](LICENSE). Adapted from Noir Wallet SDK; attribution is retained in [NOTICE.md](NOTICE.md) and [LICENSE.upstream](LICENSE.upstream).
+
+### Private NFT mints
+
+Updated wallets advertise `methods.nftMinting`. `wallet.privacy.mintNft({chainId: 1, poolAddress})` requests the reviewed Ethereum free-mint flow, with local proving, an initial reservation approval and a separate final ETH gas approval. `getNftMints()` reads this site's public mint records; `resumeNftMint(id)` resumes the original reservation/proof or checks its saved transaction hash. Proofs, Note openings and signatures remain inside the wallet. Paid drops, arbitrary calldata, recipient overrides and other networks are rejected. These methods are present in SDK source; consumers on the existing npm version can bridge the same provider methods until the next SDK publication.

@@ -4,7 +4,20 @@ import { invalid, privacyAddress, privacyParams } from '../../validation.js';
 import { validateSponsoredPrivacyTransactionRequest } from '../../sponsored-privacy.js';
 import type { SponsoredPrivacyTransactionRequest, SponsoredPrivacyTransactionResult } from '../../types.js';
 import type { PlabsPrivacyPoolParams, PlabsPrivacySendParams, PrivacyAddress, PrivacyTransactionResult } from '../../types.js';
+import type { NftMintRequest, NftMintResult } from '../../types.js';
 export class PrivacyAPI extends BaseAPI {
+  /** Independent wallet approvals cover reservation/proving and the final ETH network fee. */
+  async mintNft(input: NftMintRequest): Promise<NftMintResult> {
+    if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(key => !['chainId', 'poolAddress'].includes(key)) || input.chainId !== 1 || typeof input.poolAddress !== 'string' || !/^0x[0-9a-f]{40}$/i.test(input.poolAddress)) invalid('An Ethereum NFT collection intent is required; no calldata, proof, recipient or payment is accepted.');
+    return this.request('plabs_mintNft', [{ chainId: 1, poolAddress: input.poolAddress.toLowerCase() }]);
+  }
+  /** Returns only mint requests created by this website and the connected wallet. */
+  getNftMints(): Promise<NftMintResult[]> { return this.request('plabs_getNftMints'); }
+  /** Sent transactions are checked by their original hash; no second mint is signed. */
+  async resumeNftMint(id: string): Promise<NftMintResult> {
+    if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) invalid('A local NFT mint ID returned by this wallet is required.');
+    return this.request('plabs_resumeNftMint', [id]);
+  }
   requestAccess(scopes: PrivacyReadScope[]): Promise<PrivacySession> {
     if (!Array.isArray(scopes) || !scopes.length || scopes.length > 5 || scopes.some(scope => !['address', 'balances', 'history', 'notes', 'dexOrders'].includes(scope))) invalid('Select supported privacy read scopes.');
     return this.request('plabs_requestPrivacyAccess', [{ scopes: [...new Set(scopes)] }]);
