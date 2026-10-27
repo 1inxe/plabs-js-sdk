@@ -20,7 +20,7 @@ npm run build
 npm pack
 ```
 
-在应用中安装生成的包：`npm install /path/to/plabs-js-sdk-0.2.0.tgz`。
+在应用中安装生成的包：`npm install /path/to/plabs-js-sdk-0.3.0.tgz`。
 
 ## 连接钱包
 
@@ -87,7 +87,7 @@ async function sendPrivateTransfer(params: PlabsPrivacySendParams) {
 
 ## 赞助托管付款
 
-此接口已加入源码，将随下一版 SDK 发布。当前包版本仍为 `0.2.0`，已有 npm 安装不包含这些新增接口。可在本地构建此仓库使用类型化方法，并在展示付款入口前检查当前扩展的能力声明。
+此接口已随 `plabs-js-sdk@0.3.0` 发布。请从 npm 升级到此版本，并在展示付款入口前检查当前扩展的能力声明。
 
 ```ts
 import {
@@ -197,8 +197,8 @@ try {
 
 ### 白名单所有权证明
 
-钱包声明 `capabilities.methods.privacyOwnership` 后，可调用 `sdk.privacy.proveOwnership(message, privacyAddress)`。该操作单独请求用户批准，返回 `bjj-schnorr-v1` 公共证明，不导出隐私密钥。`getAddress()` 的可选 `rawAddress` 字段可用于官网白名单挑战接口。消息最多 8192 字符，地址必须与当前隐私账户一致。此接口已加入源码，需发布新版 SDK 后供 npm 使用者升级。
+钱包声明 `capabilities.methods.privacyOwnership` 后，可调用 `sdk.privacy.proveOwnership(message, privacyAddress)`。该操作单独请求用户批准，返回 `bjj-schnorr-v1` 公共证明，不导出隐私密钥。`getAddress()` 的可选 `rawAddress` 字段可用于官网白名单挑战接口。消息最多 8192 字符，地址必须与当前隐私账户一致。此接口已随 `plabs-js-sdk@0.3.0` 发布。
 
 ### 隐私 NFT mint
 
-新钱包通过 `methods.nftMinting` 声明支持能力。`wallet.privacy.mintNft({chainId: 1, poolAddress})` 发起已验证 Ethereum 免费合集的铸造；预留/证明和最终 ETH Gas 分别确认。`getNftMints()` 仅读取当前网站的公开 mint 记录，`resumeNftMint(id)` 恢复原预留和证明，或核对已保存的原交易哈希。证明、私有 Note 和原始签名不返回网页。拒绝其他网络、付费发售、任意 calldata 和收款地址覆盖。源码已提供方法；使用现有 npm 版本的前端可先直接桥接同名 provider RPC。
+新钱包通过 `methods.nftMinting` 声明支持能力。`wallet.privacy.mintNft({chainId: 1, poolAddress})` 发起已验证 Ethereum 免费合集的铸造；预留/证明和最终 ETH Gas 分别确认。`getNftMints()` 仅读取当前网站的公开 mint 记录，`resumeNftMint(id)` 恢复原预留和证明，或核对已保存的原交易哈希。证明、私有 Note 和原始签名不返回网页。拒绝其他网络、付费发售、任意 calldata 和收款地址覆盖。这些方法及请求/结果类型已随 `plabs-js-sdk@0.3.0` 发布，可从包根入口或 privacy 子路径导入。

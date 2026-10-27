@@ -20,7 +20,7 @@ npm run build
 npm pack
 ```
 
-Install the generated package in your application with `npm install /path/to/plabs-js-sdk-0.2.0.tgz`.
+Install the generated package in your application with `npm install /path/to/plabs-js-sdk-0.3.0.tgz`.
 
 ## Connect a wallet
 
@@ -87,7 +87,7 @@ async function sendPrivateTransfer(params: PlabsPrivacySendParams) {
 
 ## Sponsored custody payments
 
-This API is available in the source checkout for the next SDK release. The package version remains `0.2.0`; an existing npm installation does not include these additions. Build the checkout locally to use the typed helper, and check the connected extension's capability before offering this action.
+Available in `plabs-js-sdk@0.3.0`. Install this release from npm and check the connected extension's capability before offering sponsored payments.
 
 ```ts
 import {
@@ -197,4 +197,4 @@ Run `npm test` to build ESM/CommonJS/declarations and execute the local sponsore
 
 ### Private NFT mints
 
-Updated wallets advertise `methods.nftMinting`. `wallet.privacy.mintNft({chainId: 1, poolAddress})` requests the reviewed Ethereum free-mint flow, with local proving, an initial reservation approval and a separate final ETH gas approval. `getNftMints()` reads this site's public mint records; `resumeNftMint(id)` resumes the original reservation/proof or checks its saved transaction hash. Proofs, Note openings and signatures remain inside the wallet. Paid drops, arbitrary calldata, recipient overrides and other networks are rejected. These methods are present in SDK source; consumers on the existing npm version can bridge the same provider methods until the next SDK publication.
+Updated wallets advertise `methods.nftMinting`. `wallet.privacy.mintNft({chainId: 1, poolAddress})` requests the reviewed Ethereum free-mint flow, with local proving, an initial reservation approval and a separate final ETH gas approval. `getNftMints()` reads this site's public mint records; `resumeNftMint(id)` resumes the original reservation/proof or checks its saved transaction hash. Proofs, Note openings and signatures remain inside the wallet. Paid drops, arbitrary calldata, recipient overrides and other networks are rejected. These methods and their request/result types are available in `plabs-js-sdk@0.3.0`, from both the package root and the privacy subpath.
